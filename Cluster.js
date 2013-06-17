@@ -20,7 +20,81 @@ Object.extend = Object.extend ? Object.extend :
 
 //Cluster JS
 ;(function( window, document, undefined ) {
-	var Module, Cluster;
+	var Module, Cluster, PubSub;
+
+	PubSub = (function(){
+
+		var proto = {
+
+			pub : function ( topic, args ) {
+
+		        if ( !this.topics[topic] ) return false;
+
+		        setTimeout(function () {
+		            var 
+		            subscribers = this.topics[topic],
+		            len         = subscribers ? subscribers.length : 0;
+
+		            while ( len-- ) { subscribers[len].func( args ); }
+
+		        }, 0);
+
+		        return true;
+
+		    },
+
+		    sub : function ( topic, func ) {
+		        var 
+		        that = this,
+		        token;
+
+		        if ( !this.topics[topic] ) this.topics[topic] = [];
+
+		        token = ( ++this.subUid ).toString();
+
+		        this.topics[topic].push({
+		            token: token,
+		            func: func,
+		            forget : (function( token ){
+		                return function () { that.unsub( token ); };
+		            }( token ))
+		        });
+
+		        return token;
+		    },
+
+		    unsub : function ( token ) {
+		        var m, i, j;
+
+		        for ( m in this.topics ) {
+		            if ( !this.topics[m] ) continue;
+
+		            i = 0;
+		            j = this.topics[m].length;
+		            for ( ; i < j; i++ ) {
+		                if ( this.topics[m][i].token === token ) {
+		                    this.topics[m].splice(i, 1);
+		                    return token;
+		                }
+		            }
+		        }
+
+		        return false;
+		    }
+
+		};
+
+
+		return function () {
+			var PubSub = Object.create( proto );
+
+			PubSub.subUid = -1;
+			PubSub.topics = {};
+
+			return PubSub;
+		};
+
+	}());
 
 	Module = (function () {
 
@@ -30,11 +104,17 @@ Object.extend = Object.extend ? Object.extend :
 				delete this._context.mods[ this.uid ];
 			},
 
-			_pub : function () {},
+			_pub : function () {
+				this.cluster.pubsub.pub( arguments );
+			},
 
-			_sub : function  () {},
+			_sub : function () {
+				this.cluster.pubsub.sub( arguments );
+			},
 
-			_unsub : function () {}
+			_unsub : function () {
+				this.cluster.pubsub.unsub( arguments );
+			}
 
 		};
 
@@ -96,6 +176,8 @@ Object.extend = Object.extend ? Object.extend :
 			Cluster.mods = {};
 			Cluster.enhancements = {};
 			Cluster.uid = -1;
+
+			Object.extend( Cluster.enhancements, { pubsub : PubSub() } ); // add pub/sub
 
 			return Cluster;
 		};
