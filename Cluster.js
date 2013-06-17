@@ -85,7 +85,7 @@ Object.extend = Object.extend ? Object.extend :
 		};
 
 
-		return function () {
+		return function () { // constructor
 			var PubSub = Object.create( proto );
 
 			PubSub.subUid = -1;
@@ -104,16 +104,14 @@ Object.extend = Object.extend ? Object.extend :
 				delete this._context.mods[ this.uid ];
 			},
 
-			_pub : function () {
-				this.cluster.pubsub.pub( arguments );
-			},
+			_pubsub : function () {
+				var ps = this._context._PubSub;
 
-			_sub : function () {
-				this.cluster.pubsub.sub( arguments );
-			},
-
-			_unsub : function () {
-				this.cluster.pubsub.unsub( arguments );
+				return {
+					_pub   : ps.pub,
+					_sub   : ps["sub"],
+					_unsub : ps.unsub 
+				};
 			}
 
 		};
@@ -124,6 +122,8 @@ Object.extend = Object.extend ? Object.extend :
 			Module._context = Cluster;
 			Module.uid      = uid;
 			Module.cluster  = Cluster.enhancements;
+
+			Object.extend( Module, Module._pubsub() );
 
 			return Object.extend( Module, module );
 		};
@@ -136,20 +136,22 @@ Object.extend = Object.extend ? Object.extend :
 		proto = {
 
 			collect : function ( mods ) {
-				var i, len, mod;
+				var
+				Module = this._Module,
+				i, len, mod,
 
 				if ( !mods ) return;
 
 				i = -1;
 				if ( len = mods && mods.length ? mods.length : false ) {
 					while( ++i < len ) {
-						this.mods[ ++this.uid ] = Module( this, mods[i], this.uid );
+						this.mods[ ++Module.uid ] = Module.create( this, mods[i], Module.uid );
 					}
 
 					return;
 				}
 
-				this.mods[ ++this.uid ] = Module( this, mods, this.uid );
+				this.mods[ ++Module.uid ] = Module( this, mods, Module.uid );
 
 				return this;
 			},
@@ -175,9 +177,17 @@ Object.extend = Object.extend ? Object.extend :
 
 			Cluster.mods = {};
 			Cluster.enhancements = {};
-			Cluster.uid = -1;
 
-			Object.extend( Cluster.enhancements, { pubsub : PubSub() } ); // add pub/sub
+			Object.extend( Cluster, {
+
+				_Module : {
+					create : Module,
+					uid    : -1
+				},
+
+				_PubSub : PubSub()
+
+			});
 
 			return Cluster;
 		};
