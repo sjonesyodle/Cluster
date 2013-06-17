@@ -167,7 +167,7 @@ Object.extend = Object.extend ? Object.extend :
 					return;
 				}
 
-				this.mods[ ++Module.uid ] = Module( this, mods, Module.uid );
+				this.mods[ ++Module.uid ] = Module.create( this, mods, Module.uid );
 
 				return this;
 			},
