@@ -75,6 +75,9 @@ Object.extend = Object.extend ? Object.extend :
 		            for ( ; i < j; i++ ) {
 		                if ( this.topics[m][i].token === token ) {
 		                    this.topics[m].splice(i, 1);
+
+		                    console.log( this.topics[m] );
+
 		                    return token;
 		                }
 		            }
@@ -115,17 +118,16 @@ Object.extend = Object.extend ? Object.extend :
 					_pub   : function () {
 						var args = argsArr.call( arguments );
 						args.push( that );
-						ps.Pub.apply( ps, args ) 
+						return ps.Pub.apply( ps, args ) 
 					},
 					_sub   : function () {
 						var args = argsArr.call( arguments );
 						args.push( that );
-						ps.Sub.apply( ps, args ); 
+						return ps.Sub.apply( ps, args ); 
 					},
 					_unsub : function () {
-						var args = argsArr( arguments );
-						args.push( that );
-						ps.unSub.apply( ps, args ) 
+						var args = argsArr.call( arguments );
+						return ps.unSub.apply( ps, args ) 
 					}
 				}
 			}
