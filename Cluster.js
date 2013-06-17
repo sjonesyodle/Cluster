@@ -8,154 +8,103 @@ Object.create = Object.create ? Object.create :
     };
 }());
 
+Object.extend = Object.extend ? Object.extend : 
+(function() {
+	var prop;
+	return function ( destination, source ) {
+		for ( prop in source ) { destination[prop] = source[prop]; }
+		return destination;
+	};
+}());
+
 
 //Cluster JS
 ;(function( window, document, undefined ) {
-	var 
-	cluster, Cluster,
-	module, Module;
+	var Module, Cluster;
 
-	Module = { // instance constructor methods
+	Module = (function () {
 
-		validate : function ( mod ) {
-			return (typeof mod === "object") && ("init" in mod) && (typeof mod.init === "function");
-		},
+		var proto = {
 
-		make : function ( mod ) {
-			
-		}
+			_destroy : function () {
+				delete this._context.mods[ this.uid ];
+			},
 
-	},
+			_pub : function () {},
 
-	module = { // instance blueprint with facade methods
+			_sub : function  () {},
 
-	},
+			_unsub : function () {}
 
-	Cluster = { // instance constructor methods
+		};
 
-		accumulate : function ( mods, cluster ) {
-			var i = mods.length || false;
+		return function ( Cluster, module, uid ) { // constructor
+			var Module = Object.create( proto );
 
-			if ( i ) {
-				while( i-- ) {
-					if ( Module.validate( mods[i] ) ) {
-						cluster.mods.push( this.make( mods[i] ) );
+			Module._context = Cluster;
+			Module.uid      = uid;
+			Module.cluster  = Cluster.enhancements;
+
+			return Object.extend( Module, module );
+		};
+
+	}());
+
+
+	Cluster = (function () {
+		var
+		proto = {
+
+			collect : function ( mods ) {
+				var i, len, mod;
+
+				if ( !mods ) return;
+
+				i = -1;
+				if ( len = mods && mods.length ? mods.length : false ) {
+					while( ++i < len ) {
+						this.mods[ ++this.uid ] = Module( this, mods[i], this.uid );
 					}
+
+					return;
 				}
 
-				return;
+				this.mods[ ++this.uid ] = Module( this, mods, this.uid );
+
+				return this;
+			},
+
+			enhance : function ( o ) {
+				if ( typeof o === "object" ) Object.extend( this.enhancements, o );
+			},
+
+			start : function () {
+				var mod;
+
+				for ( mod in this.mods ) {
+					if ( "init" in this.mods[mod] ) this.mods[mod].init();
+				}
+
+				return this;
 			}
 
-			if ( this.validate( mods ) ) cluster.mods.push( this.make( mods ) );
-		},
+		};
 
-		make : function ( mod ) {
-			var _mod = mod.mod;
-			if (("cfg" in mod) && ( typeof mod.cfg === "object" )) _mod.cfg = mod.cfg;
-			return _mod;
-		},
+		return function () { // constructor
+			var Cluster = Object.create( proto );
 
-		enhance : function () {
+			Cluster.mods = {};
+			Cluster.enhancements = {};
+			Cluster.uid = -1;
 
-		},
+			return Cluster;
+		};
 
-		start : function () {
+	}());
 
-		}
-	};
-
-	cluster = { // instance blueprint with facade methods
-		mods : [],
-
-		include : function ( mods ) {
-			Cluster.accumulate( mods, this );
-		},
-
-		enhance : function ( obj ) {
-			Cluster.enhance.call( this );
-			// easily extend the cluster with methods that all modules can see
-		},
-
-		start : function () {
-			Cluster.start.call( this );
-		},
-
-		notes : function () {
-
-		}
-	};
-
-	cluster.modProto = {
-
-		_destroy : function () {
-
-		},
-
-		_pub : function () {},
-
-		_sub : function () {},
-
-		_unsub : function () {}
-
-	}
-
-	window.Cluster = function () {
-		return Object.create( cluster );
-	};
-
+	window.Cluster = Cluster;
 
 }( window, document ));
-
-
-// var Unified = Cluster();
-
-
-// Unified.notes([
-
-// ]);	
-
-// Unified([
-
-// 	{
-// 		cfg : {
-
-// 		},
-
-// 		mod : {
-
-// 			init : function () {}
-
-// 		}
-
-// 	},
-
-// 	{
-// 		cfg : {
-
-// 		},
-
-// 		mod : {
-
-// 			init : function () {}
-
-// 		}
-
-// 	},
-
-// 	{
-// 		cfg : {
-
-// 		},
-
-// 		mod : {
-
-// 			init : function () {}
-
-// 		}
-
-// 	}
-
-// ]).start();
 
 
 
