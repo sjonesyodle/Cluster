@@ -26,16 +26,19 @@ Object.extend = Object.extend ? Object.extend :
 
 		var proto = {
 
-			pub : function ( topic, args ) {
+			Pub : function ( topic, args ) {
+				var that = this;
 
 		        if ( !this.topics[topic] ) return false;
 
 		        setTimeout(function () {
 		            var 
-		            subscribers = this.topics[topic],
+		            subscribers = that.topics[topic],
 		            len         = subscribers ? subscribers.length : 0;
 
-		            while ( len-- ) { subscribers[len].func( args ); }
+		            while ( len-- ) { 
+		            	subscribers[len].func.apply( subscribers[len].funcContext, [ args ] ); 
+		            }
 
 		        }, 0);
 
@@ -43,7 +46,7 @@ Object.extend = Object.extend ? Object.extend :
 
 		    },
 
-		    sub : function ( topic, func ) {
+		    Sub : function ( topic, func, funcContext ) {
 		        var 
 		        that = this,
 		        token;
@@ -53,17 +56,15 @@ Object.extend = Object.extend ? Object.extend :
 		        token = ( ++this.subUid ).toString();
 
 		        this.topics[topic].push({
-		            token: token,
-		            func: func,
-		            forget : (function( token ){
-		                return function () { that.unsub( token ); };
-		            }( token ))
+		            token       : token,
+		            func        : func,
+		            funcContext : funcContext
 		        });
 
 		        return token;
 		    },
 
-		    unsub : function ( token ) {
+		    unSub : function ( token ) {
 		        var m, i, j;
 
 		        for ( m in this.topics ) {
@@ -105,13 +106,28 @@ Object.extend = Object.extend ? Object.extend :
 			},
 
 			_pubsub : function () {
-				var ps = this._context._PubSub;
+				var
+				that    = this, 
+				ps      = that._context._PubSub,
+				argsArr = Array.prototype.slice;
 
 				return {
-					_pub   : ps.pub,
-					_sub   : ps["sub"],
-					_unsub : ps.unsub 
-				};
+					_pub   : function () {
+						var args = argsArr.call( arguments );
+						args.push( that );
+						ps.Pub.apply( ps, args ) 
+					},
+					_sub   : function () {
+						var args = argsArr.call( arguments );
+						args.push( that );
+						ps.Sub.apply( ps, args ); 
+					},
+					_unsub : function () {
+						var args = argsArr( arguments );
+						args.push( that );
+						ps.unSub.apply( ps, args ) 
+					}
+				}
 			}
 
 		};
@@ -138,7 +154,7 @@ Object.extend = Object.extend ? Object.extend :
 			collect : function ( mods ) {
 				var
 				Module = this._Module,
-				i, len, mod,
+				i, len, mod;
 
 				if ( !mods ) return;
 
