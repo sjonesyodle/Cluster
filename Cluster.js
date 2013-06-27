@@ -76,8 +76,6 @@ Object.extend = Object.extend ? Object.extend :
 		                if ( this.topics[m][i].token === token ) {
 		                    this.topics[m].splice(i, 1);
 
-		                    console.log( this.topics[m] );
-
 		                    return token;
 		                }
 		            }
