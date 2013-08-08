@@ -15,6 +15,17 @@ Object.extend = Object.extend ? Object.extend : (function () {
     };
 }());
 
+Object.size = function(O) {
+    var size = 0,
+        i;
+    for (i in O) {
+        if (O.hasOwnProperty(i)) {
+            size++;
+        }
+    }
+    return size;
+};
+
 
 (function (window, document, undefined) {
     var Module, Cluster, PubSub;
@@ -190,6 +201,22 @@ Object.extend = Object.extend ? Object.extend : (function () {
                     }
                 }
 
+                return this;
+            },
+
+            // Inject another module, after `start` has been called.
+            // `Cluster.inject({/*module here*/});`
+            inject: function (mod) {
+                var Module = this._Module,
+                    uid = Object.size(this.mods);
+
+                // Add the module to the list
+                this.mods[uid] = Module.create(this, mod, ++Module.uid);
+
+                // Run the mod's init function
+                if ("init" in this.mods[uid]) {
+                    this.mods[uid].init();
+                }
                 return this;
             }
 
