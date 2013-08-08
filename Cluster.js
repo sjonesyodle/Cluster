@@ -1,18 +1,19 @@
-
-Object.create = Object.create ? Object.create :
-(function(){
+// lib/cluster.js;
+Object.create = Object.create ? Object.create : (function () {
     var F = function () {};
-    return function ( o ) {
+    return function (o) {
         F.prototype = o;
         return new F();
     };
 }());
 
-Object.extend = Object.extend ? Object.extend : 
-(function() {
-    var prop;
-    return function ( destination, source ) {
-        for ( prop in source ) { destination[prop] = source[prop]; }
+Object.extend = Object.extend ? Object.extend : (function () {
+    return function (destination, source) {
+        for (var prop in source) {
+            if (source.hasOwnProperty(prop)) {
+                destination[prop] = source[prop];
+            }
+        }
         return destination;
     };
 }());
@@ -29,27 +30,26 @@ Object.size = function(O) {
 };
 
 
-
-//Cluster JS
-;(function( window, document, undefined ) {
+(function (window, document, undefined) {
     var Module, Cluster, PubSub;
 
-    PubSub = (function(){
+    PubSub = (function () {
 
         var proto = {
 
-            Pub : function ( topic, args ) {
+            Pub: function (topic, args) {
                 var that = this;
 
-                if ( !this.topics[topic] ) return false;
+                if (!this.topics[topic]) {
+                    return false;
+                }
 
                 setTimeout(function () {
-                    var 
-                    subscribers = that.topics[topic],
-                    len         = subscribers ? subscribers.length : 0;
+                    var subscribers = that.topics[topic],
+                        len = subscribers ? subscribers.length : 0;
 
-                    while ( len-- ) { 
-                        subscribers[len].func.apply( subscribers[len].funcContext, [ args ] ); 
+                    while (len--) {
+                        subscribers[len].func.apply(subscribers[len].funcContext, [args]);
                     }
 
                 }, 0);
@@ -58,35 +58,41 @@ Object.size = function(O) {
 
             },
 
-            Sub : function ( topic, func, funcContext ) {
-                var 
+            Sub: function (topic, func, funcContext) {
+                var
                 that = this,
-                token;
+                    token;
 
-                if ( !this.topics[topic] ) this.topics[topic] = [];
+                if (!that.topics[topic]) {
+                    that.topics[topic] = [];
+                }
 
-                token = ( ++this.subUid ).toString();
+                token = (++that.subUid).toString();
 
-                this.topics[topic].push({
-                    token       : token,
-                    func        : func,
-                    funcContext : funcContext
+                that.topics[topic].push({
+                    token: token,
+                    func: func,
+                    funcContext: funcContext
                 });
 
                 return token;
             },
 
-            unSub : function ( token ) {
+            unSub: function (token) {
                 var m, i, j;
 
-                for ( m in this.topics ) {
-                    if ( !this.topics[m] ) continue;
+                for (m in this.topics) {
+                    if (!this.topics[m]) {
+                        continue;
+                    }
 
                     i = 0;
                     j = this.topics[m].length;
-                    for ( ; i < j; i++ ) {
-                        if ( this.topics[m][i].token === token ) {
+                    for (; i < j; i++) {
+                        if (this.topics[m][i].token === token) {
                             this.topics[m].splice(i, 1);
+
+                            console.log(this.topics[m]);
 
                             return token;
                         }
@@ -100,7 +106,7 @@ Object.size = function(O) {
 
 
         return function () { // constructor
-            var PubSub = Object.create( proto );
+            var PubSub = Object.create(proto);
 
             PubSub.subUid = -1;
             PubSub.topics = {};
@@ -114,85 +120,86 @@ Object.size = function(O) {
 
         var proto = {
 
-            _destroy : function () {
-                delete this._context.mods[ this.uid ];
+            _destroy: function () {
+                delete this._context.mods[this.uid];
             },
 
-            _pubsub : function () {
+            _pubsub: function () {
                 var
-                that    = this, 
-                ps      = that._context._PubSub,
-                argsArr = Array.prototype.slice;
+                that = this,
+                    ps = that._context._PubSub,
+                    argsArr = Array.prototype.slice;
 
                 return {
-                    _pub   : function () {
-                        var args = argsArr.call( arguments );
-                        args.push( that );
-                        return ps.Pub.apply( ps, args ) 
+                    _pub: function () {
+                        var args = argsArr.call(arguments);
+                        args.push(that);
+                        return ps.Pub.apply(ps, args);
                     },
-                    _sub   : function () {
-                        var args = argsArr.call( arguments );
-                        args.push( that );
-                        return ps.Sub.apply( ps, args ); 
+                    _sub: function () {
+                        var args = argsArr.call(arguments);
+                        args.push(that);
+                        return ps.Sub.apply(ps, args);
                     },
-                    _unsub : function () {
-                        var args = argsArr.call( arguments );
-                        return ps.unSub.apply( ps, args ) 
+                    _unsub: function () {
+                        var args = argsArr.call(arguments);
+                        return ps.unSub.apply(ps, args);
                     }
-                }
+                };
             }
 
         };
 
-        return function ( Cluster, module, uid ) { // constructor
-            var Module = Object.create( proto );
+        return function (Cluster, module, uid) { // constructor
+            var Module = Object.create(proto);
 
             Module._context = Cluster;
-            Module.uid      = uid;
-            Module.cluster  = Cluster.enhancements;
+            Module.uid = uid;
+            Module.cluster = Cluster.enhancements;
 
-            Object.extend( Module, Module._pubsub() );
+            Object.extend(Module, Module._pubsub());
 
-            return Object.extend( Module, module );
+            return Object.extend(Module, module);
         };
 
     }());
 
 
     Cluster = (function () {
-        var
-        proto = {
+        var proto = {
 
-            collect : function ( mods ) {
-                var
-                Module = this._Module,
-                i, len, mod;
+            collect: function (mods) {
+                var Module = this._Module,
+                    i;
 
-                if ( !mods ) return;
-
-                i = -1;
-                if ( len = mods && mods.length ? mods.length : false ) {
-                    while( ++i < len ) {
-                        this.mods[ ++Module.uid ] = Module.create( this, mods[i], Module.uid );
-                    }
-
+                if (!mods) {
                     return;
                 }
 
-                this.mods[ ++Module.uid ] = Module.create( this, mods, Module.uid );
+                if (mods.length > 0) {
+                    for (i = -1; i < mods.length; i++) {
+                        this.mods[++Module.uid] = Module.create(this, mods[i], Module.uid);
+                    }
+                }
+
+                this.mods[++Module.uid] = Module.create(this, mods, Module.uid);
 
                 return this;
             },
 
-            enhance : function ( o ) {
-                if ( typeof o === "object" ) Object.extend( this.enhancements, o );
+            enhance: function (o) {
+                if (typeof o === "object") {
+                    Object.extend(this.enhancements, o);
+                }
             },
 
-            start : function () {
+            start: function () {
                 var mod;
 
-                for ( mod in this.mods ) {
-                    if ( "init" in this.mods[mod] ) this.mods[mod].init();
+                for (mod in this.mods) {
+                    if ("init" in this.mods[mod]) {
+                        this.mods[mod].init();
+                    }
                 }
 
                 return this;
@@ -217,19 +224,19 @@ Object.size = function(O) {
         };
 
         return function () { // constructor
-            var Cluster = Object.create( proto );
+            var Cluster = Object.create(proto);
 
             Cluster.mods = {};
             Cluster.enhancements = {};
 
-            Object.extend( Cluster, {
+            Object.extend(Cluster, {
 
-                _Module : {
-                    create : Module,
-                    uid    : -1
+                _Module: {
+                    create: Module,
+                    uid: -1
                 },
 
-                _PubSub : PubSub()
+                _PubSub: PubSub()
 
             });
 
@@ -240,7 +247,6 @@ Object.size = function(O) {
 
     window.Cluster = Cluster;
 
-}( window, document ));
+}(window, document));
 
-
-
+// End lib/cluster.js;
