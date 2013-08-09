@@ -4,7 +4,7 @@ Lightweight Modular Javascript Architecture
 
 ---
 
-Cluster _is_ yet another modular "framework" for JavaScript, but its super tiny, and designed to be easy to use; allowing you to focus on your code, not learning the framework...
+Cluster is yet another modular "framework" for JavaScript, but its super tiny, and designed to be easy to use; allowing you to focus on your code, not learning the framework...
 
 ### So what's a Cluster?
 
@@ -30,46 +30,32 @@ Using the model above, let's see how to implement 2 different Clusters:
 ```javascript
 var cluster1 = Cluster(),
 	cluster2 = Cluster()
-	_mods = []; // Define an empty Array to add Modules to
+	_mods;
 
-// Using the `collect` method;
-
-_mods.push({
+// Passing an array of Modules to the collect method
+_mods = [{
 	init: function(){
 		console.log("I am the first Module in Cluster 1");
 	}
-});
-
-
-_mods.push({
+},{
 	init: function(){
 		console.log("I am the second Module in Cluster 1");
 	}
-});
-
-_mods.push({
+},{
 	init: function(){
 		console.log("I am the third Module in Cluster 1");
 	}
-});
+}];
 
 cluster1.collect(_mods).start();
 
+
 //--------------------------
 
-// Using the `register` method;
-
-cluster2.register({
+// Passing a single module to the collect function
+cluster2.collect({
 	init: function(){
-		console.log("I am the first Module in Cluster 2");
-	}
-}).register({
-	init: function(){
-		console.log("I am the second Module in Cluster 2");
-	}
-}).register({
-	init: function(){
-		console.log("I am the third Module in Cluster 2");
+		console.log("I am the only Module in Cluster 2");
 	}
 }).start();
 ```
@@ -79,10 +65,10 @@ cluster2.register({
 ##### The `.collect()` method:
 
 ```javascript
-cluster.collect( Array );
+cluster.collect( Array or Module );
 ```
 
-This method accepts an Array of Module objects. Each object in the array will be registered all at once, but will not be initialized.
+This method accepts an Array of Module objects. Each object in the array will be registered all at once, but will not be initialized. You can input a single Module-Object, or an Array of Module-Objects.
 
 ##### The `.register()` method:
 
@@ -98,7 +84,7 @@ The register method allows you to define a single module for a given Cluster. Ag
 cluster.start(null);
 ```
 
-After running `.collect()` and/or `.register()`, and all modules are loaded into the Cluster, the start method must be called in order to initialize them.
+After running `.collect()`, and all modules are loaded into the Cluster, the start method must be called in order to initialize them.
 
 
 ##### The `.inject()` method:
@@ -107,11 +93,11 @@ After running `.collect()` and/or `.register()`, and all modules are loaded into
 cluster.inject( Array or Module );
 ```
 
-The Inject method is useful when you need to add another module after `.start()` has been called. Think of this method as a cross between `.collect()` and `.register()`. You can input a single Module-Object, or an Array of Module-Objects.
+The Inject method is useful when you need to add another module after `.start()` has been called. You can input a single Module-Object, or an Array of Module-Objects.
 
 The major difference is that `.inject()` immedeately call's the `init` function of the Module(s) after injection into to the Cluster.
 
-___This should only be used _after_ the `.start()` method has been called.___
+___This should be used only _after_ the `.start()` method has been called.___
 
 ### Tie the methods together
 

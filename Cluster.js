@@ -1,4 +1,3 @@
-// lib/cluster.js;
 Object.create = Object.create ? Object.create : (function () {
     var F = function () {};
     return function (o) {
@@ -166,29 +165,23 @@ Object.size = function (O) {
 
 
     Cluster = (function () {
-        var vars = {
-            collected: false,
-            registries: []
-        },
-            proto = {
+        var proto = {
 
             collect: function (mods) {
                 var Module = this._Module,
                     i;
 
-                vars.collected = true;
-
                 if (!mods) {
                     return;
                 }
 
-                if (mods.length > 0) {
-                    for (i = -1; i < mods.length; i++) {
-                        this.mods[++Module.uid] = Module.create(this, mods[i], Module.uid);
-                    }
-                }
+                // Make sure mods is always an array
+                mods = [].concat(mods);
 
-                this.mods[++Module.uid] = Module.create(this, mods, Module.uid);                
+                for (i = -1; i < mods.length; i++) {
+                    this.mods[++Module.uid] = Module.create(this, mods[i], Module.uid);
+                }
+                                               
                 return this;
             },
 
@@ -201,31 +194,12 @@ Object.size = function (O) {
             start: function () {
                 var mod;
 
-                if (vars.collected === false){
-                    if(vars.registries.length === 0){
-                        return;
-                    }
-
-                    return this.collect( vars.registries ).start();
-                }
-
                 for (mod in this.mods) {
                     if ("init" in this.mods[mod]) {
                         this.mods[mod].init();
                     }
                 }
 
-                delete vars.registries;
-
-                return this;
-            },
-
-            
-            register: function(O){
-                if (O && typeof O === "object"){
-                    vars.registries.push(O);
-                }
-                // Always `return this;` to maintain chainability
                 return this;
             },
 
@@ -295,5 +269,3 @@ Object.size = function (O) {
     window.Cluster = Cluster;
 
 }(window, document));
-
-// End lib/cluster.js;
