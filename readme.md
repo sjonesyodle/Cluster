@@ -4,11 +4,11 @@ Lightweight Modular Javascript Architecture
 
 ---
 
-Cluster _is_ yet another modular "framework" for JavaScript, but its super tiny, and designed to be easy to use. Allowing you to focus on your code, not learning the framework...
+Cluster _is_ yet another modular "framework" for JavaScript, but its super tiny, and designed to be easy to use; allowing you to focus on your code, not learning the framework...
 
 ### So what's a Cluster?
 
-Well, think of a Cluster as a stand-alone section of JS code. One JS app can have multiple Clusters, each containing multiple Modules. I'll break it down:
+Well, think of a Cluster as a stand-alone section of JS code. One JS app can have multiple (or just one) Clusters, each containing multiple Modules. I'll break it down:
 
 * Cluster 1
 	* Module 1
@@ -19,7 +19,7 @@ Well, think of a Cluster as a stand-alone section of JS code. One JS app can hav
 	* Module 2
 	* Module 3
 
-Under this model, Cluster 1 cannot interact with Cluster 2. But the modules within each Cluster can _loosely_ interact with with each other, using the Pub/Sub methods (more about that later).
+Under this model, Modules in Cluster 1 cannot interact with Modules in Cluster 2. But the modules within each Cluster can _loosely_ interact with with each other, using the Pub/Sub methods (more about that later).
 
 Each Module inside of a Cluster is an Object-Literal that requires a property named `init` who's value is a function.
 
@@ -82,7 +82,7 @@ cluster2.register({
 cluster.collect( Array );
 ```
 
-This method accepts an Array of Module objects. Each object in the array will be registered all at once, but will not be called.
+This method accepts an Array of Module objects. Each object in the array will be registered all at once, but will not be initialized.
 
 ##### The `.register()` method:
 
@@ -90,7 +90,7 @@ This method accepts an Array of Module objects. Each object in the array will be
 cluster.register( Single-Object );
 ```
 
-The register method allows you to define a single module for a given Cluster.
+The register method allows you to define a single module for a given Cluster. Again, any Module passed will not be initialized.
 
 ##### The `.start()` method:
 
@@ -98,7 +98,7 @@ The register method allows you to define a single module for a given Cluster.
 cluster.start(null);
 ```
 
-After running `.collect()` and/or `.register()`, and all modules are loaded into the Cluster, the start method must be called in order to invoke them.
+After running `.collect()` and/or `.register()`, and all modules are loaded into the Cluster, the start method must be called in order to initialize them.
 
 
 ##### The `.inject()` method:
@@ -109,13 +109,13 @@ cluster.inject( Array or Module );
 
 The Inject method is useful when you need to add another module after `.start()` has been called. Think of this method as a cross between `.collect()` and `.register()`. You can input a single Module-Object, or an Array of Module-Objects.
 
-The major difference is that `.inject()` immedeately call's the `init` function of the Module(s) after adding the to the Cluster.
+The major difference is that `.inject()` immedeately call's the `init` function of the Module(s) after injection into to the Cluster.
 
-This should only be used _after_ the `.start()` method has been called.
+___This should only be used _after_ the `.start()` method has been called.___
 
 ### Tie the methods together
 
-Each Cluster method is chain-able. Meaning you may call one method right after another.
+Each Cluster method is chain-able; you may call one method right after another.
 
 ```javascript
 cluster.collect(myArrOfMods).start();
@@ -125,7 +125,7 @@ cluster.collect(myArrOfMods).start();
 
 ## Pub/Sub
 
-This is the fun part. Each Cluster has it's own set of messages for Subscribing to and Publishing to. One Cluster cannot interact with another's Pub/Sub messages.
+This is the fun part. Each Cluster has it's own set of messages for Subscribing and Publishing. One Cluster, nor it's Modules can interact with another's Pub/Sub messages.
 
 Within each Module, you can Subscribe to a message like so:
 
