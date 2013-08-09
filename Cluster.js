@@ -183,7 +183,7 @@ Object.size = function (O) {
                 // Make sure mods is always an array
                 mods = [].concat(mods);
 
-                for (i = -1; i < mods.length; i++) {
+                for (i = 0; i < mods.length; i++) {
                     this.mods[++Module.uid] = Module.create(this, mods[i], Module.uid);
                 }
 

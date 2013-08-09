@@ -29,7 +29,7 @@ Using the model above, let's see how to implement 2 different Clusters:
 
 ```javascript
 var cluster1 = Cluster(),
-	cluster2 = Cluster()
+	cluster2 = Cluster(),
 	_mods;
 
 // Passing an array of Modules to the collect method
