@@ -1,3 +1,9 @@
+/**
+ * @preserve Cluster.js
+ * Copyright 2013 Steve Jones & Matt Jordan
+ * Licensed under Creative Commons BY-SA 2.0 (http://creativecommons.org/licenses/by-sa/2.0/)
+*/
+
 Object.create = Object.create ? Object.create : (function () {
     var F = function () {};
     return function (o) {
@@ -163,7 +169,6 @@ Object.size = function (O) {
 
     }());
 
-
     Cluster = (function () {
         var proto = {
 
@@ -181,7 +186,7 @@ Object.size = function (O) {
                 for (i = -1; i < mods.length; i++) {
                     this.mods[++Module.uid] = Module.create(this, mods[i], Module.uid);
                 }
-                                               
+
                 return this;
             },
 
@@ -209,7 +214,8 @@ Object.size = function (O) {
             // `Cluster.inject({/*module here*/}, {/*module here*/});`
             inject: function (O) {
                 var Module = this._Module,
-                    List = Array.prototype.slice.call(arguments, 1), // get any arguments, after the first one `O`.
+                    List = Array.prototype.slice.call(arguments, 1),
+                    // get any arguments, after the first one `O`.
                     uid = (Object.size(this.mods) - 1),
                     i;
 

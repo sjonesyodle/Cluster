@@ -52,7 +52,7 @@ cluster1.collect(_mods).start();
 
 //--------------------------
 
-// Passing a single module to the collect function
+// Passing a single module to the collect method
 cluster2.collect({
 	init: function(){
 		console.log("I am the only Module in Cluster 2");
