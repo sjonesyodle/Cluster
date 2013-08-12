@@ -91,7 +91,7 @@ The major difference is that `.inject()` immediately call's the `init` function 
 
 ___This should be used only _after_ the `.start()` method has been called.___
 
-##### the `.enhance()` method:
+##### The `.enhance()` method:
 
 When writing a JS application, there are often functions that will need to be called multiple times in different Modules.
 
