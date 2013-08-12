@@ -68,15 +68,7 @@ cluster2.collect({
 cluster.collect( Array or Module );
 ```
 
-This method accepts an Array of Module objects. Each object in the array will be registered all at once, but will not be initialized. You can input a single Module-Object, or an Array of Module-Objects.
-
-##### The `.register()` method:
-
-```javascript
-cluster.register( Single-Object );
-```
-
-The register method allows you to define a single module for a given Cluster. Again, any Module passed will not be initialized.
+This method is how we tell a certain cluster to 'register' a module. It accepts a single Module-Object, or an Array of Module-Objects. Note, `.collect()` will not initialize modules.
 
 ##### The `.start()` method:
 
@@ -95,13 +87,44 @@ cluster.inject( Array or Module );
 
 The Inject method is useful when you need to add another module after `.start()` has been called. You can input a single Module-Object, or an Array of Module-Objects.
 
-The major difference is that `.inject()` immedeately call's the `init` function of the Module(s) after injection into to the Cluster.
+The major difference is that `.inject()` immediately call's the `init` function of the Module(s) after injection into to the Cluster.
 
 ___This should be used only _after_ the `.start()` method has been called.___
 
+##### the `.enhance()` method:
+
+When writing a JS application, there are often functions that will need to be called multiple times in different Modules.
+
+The `.enhance()` method accepts an Object-Literal of functions that get added to the cluster.
+
+```javascript
+var cluster = Cluster(), // Create a cluster
+	myEnhancments = {
+	someFunc1: function (){
+		// Do something here
+	},
+	someFunc2: function (){
+		// Do something else here
+	}
+};
+
+cluster.enhance(myEnhancments);
+```
+
+Now, every Module in the Cluster will have access to `somefunc1` and `someFunc2` like so:
+
+```javascript
+cluster.collect({
+	init: function (){
+		// calling somefunc1
+		this.cluster.somefunc1();
+	}
+}).start();
+```
+
 ### Tie the methods together
 
-Each Cluster method is chain-able; you may call one method right after another.
+Each Cluster method (except `.enhance()`) is chain-able; so you may call one method right after another.
 
 ```javascript
 cluster.collect(myArrOfMods).start();
