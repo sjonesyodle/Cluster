@@ -194,15 +194,22 @@ Object.size = function (O) {
                 if (typeof o === "object") {
                     Object.extend(this.enhancements, o);
                 }
+                return this;
             },
 
-            start: function () {
+            start: function (O) {
                 var mod;
 
                 for (mod in this.mods) {
                     if ("init" in this.mods[mod]) {
                         this.mods[mod].init();
                     }
+                }
+
+                // `.start({debug: true});`
+                if(O && !!O.debug && window.console){
+                    console.log("Modules:", this.mods);
+                    console.log("Messages:", this._PubSub.topics);
                 }
 
                 return this;

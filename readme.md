@@ -23,7 +23,7 @@ Under this model, Modules in Cluster 1 cannot interact with Modules in Cluster 2
 
 Each Module inside of a Cluster is an Object-Literal that requires a property named `init` who's value is a function.
 
-### So, what does it look like?
+### What does it look like?
 
 Using the model above, let's see how to implement 2 different Clusters:
 
@@ -73,11 +73,18 @@ This method is how we tell a certain cluster to 'register' a module. It accepts 
 ##### The `.start()` method:
 
 ```javascript
-cluster.start(null);
+cluster.start(Object);
 ```
 
 After running `.collect()`, and all modules are loaded into the Cluster, the start method must be called in order to initialize them.
 
+The Object argument for start currently only accepts one property - `debug`
+
+```javascript
+cluster.start({debug: true});
+```
+
+This will log all of the modules and messages registered in the Cluster.
 
 ##### The `.inject()` method:
 
@@ -139,10 +146,10 @@ This is the fun part. Each Cluster has it's own set of messages for Subscribing 
 Within each Module, you can Subscribe to a message like so:
 
 ```javascript
-this._sub("message", function([arg, arg ...]){ /* CALLBACK */ });
+var token = this._sub("message", function([arg, arg ...]){ /* CALLBACK */ });
 ```
 
-Obviously, `"message"` should be a unique ID for another Module to Publish on.
+Obviously, `"message"` should be a unique ID for another Module to Publish on. The _sub method returns a unique token. Here we are setting that token to a variable for use later on.
 
 To publish a message for a subscriber to hear:
 
@@ -153,5 +160,7 @@ this._pub("message"[, arg, arg ...]);
 If at any point you want to unsubscribe a Module from a publisher, use:
 
 ```javascript
-this._unsub("message");
+this._unsub(token);
 ```
+
+The _unsub method requires a token returned from `_sub`.
