@@ -195,21 +195,23 @@ Object.size = function (O) {
             },
 
             start: function (O) {
-                var mod;
+                var self = this,
+                    Log,
+                    mod;
 
-                for (mod in this.mods) {
-                    if ("init" in this.mods[mod]) {
-                        this.mods[mod].init();
+                for (mod in self.mods) {
+                    if ("init" in self.mods[mod]) {
+                        self.mods[mod].init();
                     }
                 }
 
-                // `.start({debug: true});`
-                if(O && !!O.debug && window.console){
-                    console.log("Modules:", this.mods);
-                    console.log("Messages:", this._PubSub.topics);
+                if(O && !!O.debug){
+                    Log = (!!window.console) ? console.log : function(){};
+                    Log("Modules:", self.mods);
+                    Log("Messages:", self._PubSub.topics);
                 }
 
-                return this;
+                return self;
             },
 
             // Inject another module, after `start` has been called.
