@@ -2,7 +2,7 @@
  * @preserve Cluster.js
  * Copyright 2013 Steve Jones & Matt Jordan
  * Licensed under Creative Commons BY-SA 2.0 (http://creativecommons.org/licenses/by-sa/2.0/)
-*/
+ */
 
 Object.create = Object.create ? Object.create : (function () {
     var F = function () {};
@@ -172,35 +172,52 @@ Object.size = function (O) {
     Cluster = (function () {
         var proto = {
 
+            enhance: function (O) {
+                var messages = O.messages,
+                    Obj = {},
+                    i,
+                    m;
+
+                if (!O || typeof O !== "object") {
+                    return this;
+                }
+
+                if (!!messages && Object.prototype.toString.call(messages) === "[object Array]") {
+                    for (i in messages) {
+                        if (messages.hasOwnProperty(i)) {
+                            m = messages[i].toString();
+                            Obj[m] = m;
+                        }
+                    }
+                    O.messages = Obj;
+                }
+
+                Object.extend(this.enhancements, O);
+                return this;
+            },
+
             collect: function (mods) {
-                var Module = this._Module,
+                var self = this,
+                    Module = self._Module,
                     i;
 
                 if (!mods) {
-                    return;
+                    return self;
                 }
 
                 // Make sure mods is always an array
                 mods = [].concat(mods);
 
                 for (i = 0; i < mods.length; i++) {
-                    this.mods[++Module.uid] = Module.create(this, mods[i], Module.uid);
+                    self.mods[++Module.uid] = Module.create(self, mods[i], Module.uid);
                 }
 
-                return this;
-            },
-
-            enhance: function (o) {
-                if (typeof o === "object") {
-                    Object.extend(this.enhancements, o);
-                }
-                return this;
+                return self;
             },
 
             start: function (O) {
                 var self = this,
-                    Log,
-                    mod;
+                    Log, mod;
 
                 for (mod in self.mods) {
                     if ("init" in self.mods[mod]) {
@@ -208,8 +225,8 @@ Object.size = function (O) {
                     }
                 }
 
-                if(O && !!O.debug){
-                    Log = (!!window.console) ? console.log : function(){};
+                if (O && !! O.debug) {
+                    Log = ( !! window.console) ? console.log : function () {};
                     Log("Modules:", self.mods);
                     Log("Messages:", self._PubSub.topics);
                 }
@@ -217,15 +234,12 @@ Object.size = function (O) {
                 return self;
             },
 
-            // Inject another module, after `start` has been called.
-            // `Cluster.inject({/*module here*/});`
-            // `Cluster.inject([{/*module here*/}, {/*module here*/}]);`
-            // `Cluster.inject({/*module here*/}, {/*module here*/});`
+            
             inject: function (O) {
-                var Module = this._Module,
+                var self = this,
+                    Module = self._Module,
                     List = Array.prototype.slice.call(arguments, 1),
-                    // get any arguments, after the first one `O`.
-                    uid = (Object.size(this.mods) - 1),
+                    uid = (Object.size(self.mods) - 1),
                     i;
 
                 // If `List` is not empty, assume there are more module objects sent as List Arguments
@@ -233,28 +247,21 @@ Object.size = function (O) {
                     List.unshift(O);
                     O = List;
                 } else {
-                    // No List args in sight, treat the first arg `O` as an array and loop through it.
-                    // Even if there's just one.
                     O = [].concat(O);
                 }
 
                 for (i in O) {
                     if (O.hasOwnProperty(i)) {
                         uid++;
+                        
+                        self.mods[uid] = Module.create(self, O[i], ++Module.uid);
 
-                        // Add the module to the list
-                        this.mods[uid] = Module.create(this, O[i], ++Module.uid);
-
-                        // Run the mod's init function
-                        if ("init" in this.mods[uid]) {
-                            this.mods[uid].init();
+                        if ("init" in self.mods[uid]) {
+                            self.mods[uid].init();
                         }
                     }
                 }
-
-                // One could call the `inject` menthod more than once:
-                // `Cluster(var name).inject({/*object 1*/}).inject({/*object 2*/}) ... `
-                return this;
+                return self;
             }
 
         };
