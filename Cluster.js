@@ -36,7 +36,10 @@ Object.size = function (O) {
 
 
 (function (window, document, undefined) {
-    var Module, Cluster, PubSub;
+    var Log = ( !! window.console) ? console.log : function () {},
+        Module,
+        Cluster,
+        PubSub;
 
     PubSub = (function () {
 
@@ -97,7 +100,7 @@ Object.size = function (O) {
                         if (this.topics[m][i].token === token) {
                             this.topics[m].splice(i, 1);
 
-                            console.log(this.topics[m]);
+                            Log(this.topics[m]);
 
                             return token;
                         }
@@ -217,7 +220,7 @@ Object.size = function (O) {
 
             start: function (O) {
                 var self = this,
-                    Log, mod;
+                    mod;
 
                 for (mod in self.mods) {
                     if ("init" in self.mods[mod]) {
@@ -226,7 +229,6 @@ Object.size = function (O) {
                 }
 
                 if (O && !! O.debug) {
-                    Log = ( !! window.console) ? console.log : function () {};
                     Log("Modules:", self.mods);
                     Log("Messages:", self._PubSub.topics);
                 }
