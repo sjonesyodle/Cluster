@@ -243,14 +243,17 @@
 
             start: function () {
                 var self = this,
+                    name,
                     mod;
 
                 if (debugMode) {
-                    Log("Modules:", self.mods);
-                    Log("Messages:", self._PubSub.topics);
+                    name = (!!self.options && !!self.options.name) ? self.options.name + " " : "";
+                    
+                    Log(name + "Modules:", self.mods);
+                    Log(name + "Messages:", self._PubSub.topics);
                     
                     if(extendConflicts.length > 0){
-                        Log(extendConflicts.join(', '));
+                        Log(name + "Conflicts: ", extendConflicts.join(', '));
                     }
                 }
 
@@ -309,8 +312,8 @@
             var Cluster = Internal.create(proto);
 
             if(options && !!options.debug){
-                debugMode = true;
-                delete options.debug;
+                    debugMode = true;
+                    delete options.debug;
             }
 
             Cluster.options = options;
