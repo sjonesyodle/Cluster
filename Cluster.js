@@ -4,42 +4,43 @@
  * Licensed under Creative Commons BY-SA 2.0 (http://creativecommons.org/licenses/by-sa/2.0/)
  */
 
-Object.create = Object.create ? Object.create : (function () {
-    var F = function () {};
-    return function (o) {
-        F.prototype = o;
-        return new F();
-    };
-}());
-
-Object.extend = Object.extend ? Object.extend : (function () {
-    return function (destination, source) {
-        for (var prop in source) {
-            if (source.hasOwnProperty(prop)) {
-                destination[prop] = source[prop];
-            }
-        }
-        return destination;
-    };
-}());
-
-Object.size = function (O) {
-    var size = 0,
-        i;
-    for (i in O) {
-        if (O.hasOwnProperty(i)) {
-            size++;
-        }
-    }
-    return size;
-};
-
-
 (function (window, document, undefined) {
     var Log = ( !! window.console) ? console.log : function () {},
+        Internal,
         Module,
         Cluster,
         PubSub;
+
+    Internal = {
+        create: (function () {
+            var F = function () {};
+            return function (o) {
+                F.prototype = o;
+                return new F();
+            };
+        }()),
+
+        extend: function (destination, source, noConflict) {
+            for (var prop in source) {
+                if (source.hasOwnProperty(prop) && !( !! noConflict && prop in destination)) {
+                    destination[prop] = source[prop];
+                }
+            }
+            return destination;
+        },
+
+        size: function (O) {
+            var size = 0,
+                i;
+            for (i in O) {
+                if (O.hasOwnProperty(i)) {
+                    size++;
+                }
+            }
+            return size;
+        }
+    };
+
 
     PubSub = (function () {
 
@@ -114,7 +115,7 @@ Object.size = function (O) {
 
 
         return function () { // constructor
-            var PubSub = Object.create(proto);
+            var PubSub = Internal.create(proto);
 
             PubSub.subUid = -1;
             PubSub.topics = {};
@@ -158,16 +159,21 @@ Object.size = function (O) {
 
         };
 
-        return function (Cluster, module, uid) { // constructor
-            var Module = Object.create(proto);
+        return function (Cluster, module, uid, options) { // constructor
+            var Module = Internal.create(proto);
 
             Module._context = Cluster;
             Module.uid = uid;
-            Module.cluster = Cluster.enhancements;
 
-            Object.extend(Module, Module._pubsub());
+            if (options && options.mergeEnhancments) {
+                Internal.extend(module, Cluster.enhancements, true);
+            } else {
+                Module.cluster = Cluster.enhancements;
+            }
 
-            return Object.extend(Module, module);
+            Internal.extend(Module, Module._pubsub());
+
+            return Internal.extend(Module, module);
         };
 
     }());
@@ -185,7 +191,7 @@ Object.size = function (O) {
                     return this;
                 }
 
-                if (!!messages && Object.prototype.toString.call(messages) === "[object Array]") {
+                if ( !! messages && Object.prototype.toString.call(messages) === "[object Array]") {
                     for (i in messages) {
                         if (messages.hasOwnProperty(i)) {
                             m = messages[i].toString();
@@ -195,13 +201,15 @@ Object.size = function (O) {
                     O.messages = Obj;
                 }
 
-                Object.extend(this.enhancements, O);
+                Internal.extend(this.enhancements, O);
                 return this;
             },
 
             collect: function (mods) {
                 var self = this,
                     Module = self._Module,
+                    ops = self.options || {},
+                    theMod,
                     i;
 
                 if (!mods) {
@@ -212,7 +220,14 @@ Object.size = function (O) {
                 mods = [].concat(mods);
 
                 for (i = 0; i < mods.length; i++) {
-                    self.mods[++Module.uid] = Module.create(self, mods[i], Module.uid);
+                    theMod = mods[i];
+
+                    if ( !! theMod.mergeEnhancments) {
+                        ops.mergeEnhancments = true;
+                    }
+
+
+                    self.mods[++Module.uid] = Module.create(self, theMod, Module.uid, ops);
                 }
 
                 return self;
@@ -236,12 +251,14 @@ Object.size = function (O) {
                 return self;
             },
 
-            
+
             inject: function (O) {
                 var self = this,
                     Module = self._Module,
                     List = Array.prototype.slice.call(arguments, 1),
-                    uid = (Object.size(self.mods) - 1),
+                    uid = (Internal.size(self.mods) - 1),
+                    ops = self.options || {},
+                    theMod,
                     i;
 
                 // If `List` is not empty, assume there are more module objects sent as List Arguments
@@ -255,8 +272,16 @@ Object.size = function (O) {
                 for (i in O) {
                     if (O.hasOwnProperty(i)) {
                         uid++;
-                        
-                        self.mods[uid] = Module.create(self, O[i], ++Module.uid);
+
+                        theMod = O[i];
+
+
+
+                        if ( !! theMod.mergeEnhancments) {
+                            ops.mergeEnhancments = true;
+                        }
+
+                        self.mods[uid] = Module.create(self, theMod, ++Module.uid, ops);
 
                         if ("init" in self.mods[uid]) {
                             self.mods[uid].init();
@@ -268,13 +293,14 @@ Object.size = function (O) {
 
         };
 
-        return function () { // constructor
-            var Cluster = Object.create(proto);
+        return function (options) { // constructor
+            var Cluster = Internal.create(proto);
 
+            Cluster.options = options;
             Cluster.mods = {};
             Cluster.enhancements = {};
 
-            Object.extend(Cluster, {
+            Internal.extend(Cluster, {
 
                 _Module: {
                     create: Module,
