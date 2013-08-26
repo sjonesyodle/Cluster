@@ -1,14 +1,14 @@
 # Cluster JS
 
-Lightweight Modular Javascript Architecture
+Lightweight modular architecture for building maintainable JavaScript applications.
 
 ---
 
-Cluster is yet another modular "framework" for JavaScript, but its super tiny, and designed to be easy to use; allowing you to focus on your code, not learning the framework...
+Cluster is super-tiny and designed to be easy to use--allowing you to focus on your code, not learning the framework...
 
-### So what's a Cluster?
+### So what is a Cluster?
 
-Well, think of a Cluster as a stand-alone section of JS code. One JS app can have multiple (or just one) Clusters, each containing multiple Modules. I'll break it down:
+Think of a Cluster as a stand-alone section of JS code. One JS app can have many Clusters, or just one, each containing multiple Modules. Let's break it down:
 
 * Cluster 1
 	* Module 1
@@ -70,6 +70,8 @@ cluster.collect( Array or Module );
 
 This method is how we tell a certain cluster to 'register' a module. It accepts a single Module-Object, or an Array of Module-Objects. Note, `.collect()` will not initialize modules.
 
+---
+
 ##### The `.start()` method:
 
 ```javascript
@@ -86,6 +88,8 @@ cluster.start({debug: true});
 
 This will log all of the modules and messages registered in the Cluster.
 
+---
+
 ##### The `.inject()` method:
 
 ```javascript
@@ -96,7 +100,9 @@ The Inject method is useful when you need to add another module after `.start()`
 
 The major difference is that `.inject()` immediately call's the `init` function of the Module(s) after injection into to the Cluster.
 
-___This should be used only _after_ the `.start()` method has been called.___
+> This should be used only after the `.start()` method has been called.
+
+---
 
 ##### The `.enhance()` method:
 
@@ -129,6 +135,8 @@ cluster.collect({
 }).start();
 ```
 
+---
+
 ### Tie the methods together
 
 Each Cluster method (except `.enhance()`) is chain-able; so you may call one method right after another.
@@ -139,7 +147,7 @@ cluster.collect(myArrOfMods).start();
 
 ---
 
-## Pub/Sub
+## PubSub
 
 This is the fun part. Each Cluster has it's own set of messages for Subscribing and Publishing. One Cluster, nor it's Modules can interact with another's Pub/Sub messages.
 
@@ -164,3 +172,5 @@ this._unsub(token);
 ```
 
 The _unsub method requires a token returned from `_sub`.
+
+> Read more about PubSub [here](https://github.com/sjonesyodle/Cluster/wiki/PubSub-Hubbub)
