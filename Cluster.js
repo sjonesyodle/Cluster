@@ -6,6 +6,8 @@
 
 (function (window, document, undefined) {
     var Log = ( !! window.console) ? console.log : function () {},
+        extendConflicts = [], // Global so we can see it in debug mode
+        debugMode = false,
         Internal,
         Module,
         Cluster,
@@ -21,8 +23,13 @@
         }()),
 
         extend: function (destination, source, noConflict) {
-            for (var prop in source) {
-                if (source.hasOwnProperty(prop) && !( !! noConflict && prop in destination)) {
+            var prop;
+            for (prop in source) {
+                if (source.hasOwnProperty(prop)) {
+                    if ( !! noConflict && prop in destination){
+                        extendConflicts.push(prop + " is already defined");
+                        return;
+                    }
                     destination[prop] = source[prop];
                 }
             }
@@ -165,15 +172,16 @@
             Module._context = Cluster;
             Module.uid = uid;
 
+            Internal.extend(Module, Module._pubsub());
+            Module = Internal.extend(Module, module);
+
             if (options && options.mergeEnhancments) {
-                Internal.extend(module, Cluster.enhancements, true);
+                Internal.extend(Module, Cluster.enhancements, true);
             } else {
                 Module.cluster = Cluster.enhancements;
             }
-
-            Internal.extend(Module, Module._pubsub());
-
-            return Internal.extend(Module, module);
+            
+            return Module;
         };
 
     }());
@@ -233,19 +241,23 @@
                 return self;
             },
 
-            start: function (O) {
+            start: function () {
                 var self = this,
                     mod;
+
+                if (debugMode) {
+                    Log("Modules:", self.mods);
+                    Log("Messages:", self._PubSub.topics);
+                    
+                    if(extendConflicts.length > 0){
+                        Log(extendConflicts.join(', '));
+                    }
+                }
 
                 for (mod in self.mods) {
                     if ("init" in self.mods[mod]) {
                         self.mods[mod].init();
                     }
-                }
-
-                if (O && !! O.debug) {
-                    Log("Modules:", self.mods);
-                    Log("Messages:", self._PubSub.topics);
                 }
 
                 return self;
@@ -295,6 +307,11 @@
 
         return function (options) { // constructor
             var Cluster = Internal.create(proto);
+
+            if(options && !!options.debug){
+                debugMode = true;
+                delete options.debug;
+            }
 
             Cluster.options = options;
             Cluster.mods = {};
