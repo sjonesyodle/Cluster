@@ -4,7 +4,7 @@ Lightweight modular architecture for building maintainable JavaScript applicatio
 
 ---
 
-Cluster is super-tiny and designed to be easy to use--allowing you to focus on your code, not learning the framework...
+Cluster is super-tiny and designed to be easy to use--allowing you to focus on your code...
 
 ### So what is a Cluster?
 

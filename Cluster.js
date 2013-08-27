@@ -4,7 +4,7 @@
  * Licensed under Creative Commons BY-SA 2.0 (http://creativecommons.org/licenses/by-sa/2.0/)
  */
 
-(function (window, document, undefined) {
+(function (window) {
     var Log = ( !! window.console) ? console.log : function () {},
         extendConflicts = [], // Global so we can see it in debug mode
         debugMode = false,
@@ -338,4 +338,4 @@
 
     window.Cluster = Cluster;
 
-}(window, document));
+}(window));
