@@ -185,153 +185,145 @@
     }());
 
     Cluster = (function () {
-        var BAinit = function (self, mode, callback) {
-            var prop, O, i;
-            if (options) {
-                prop = (mode === "after") ? options.afterInit : options.beforeInit;
+        var proto = {
 
-                if (!prop) {
-                    return;
+            enhance: function (O) {
+                var messages = O.messages,
+                    Obj = {},
+                    i, m;
+
+                if (!O || typeof O !== "object") {
+                    return this;
                 }
 
-                O = [].concat(prop);
-                for (i in O) {
-                    if (O.hasOwnProperty(i) && typeof O[i] === "function") {
-                        O[i].call(self);
+                if ( !! messages && Object.prototype.toString.call(messages) === "[object Array]") {
+                    for (i in messages) {
+                        if (messages.hasOwnProperty(i)) {
+                            m = messages[i].toString();
+                            Obj[m] = m;
+                        }
                     }
+                    O.messages = Obj;
                 }
-            }
-            if ( !! callback) {
-                callback();
-            }
-        },
-            AfterInit = function (self) {
-                BAinit(self, "after");
+
+                Internal.extend(this.enhancements, O);
+                return this;
             },
 
-            BeforeInit = function (self, callback) {
-                BAinit(self, "before", callback);
-            },
+            collect: function (mods) {
+                var self = this,
+                    Module = self._Module,
+                    ops = self.options || {},
+                    theMod, i;
 
-            proto = {
+                if (!mods) {
+                    return self;
+                }
 
-                enhance: function (O) {
-                    var messages = O.messages,
-                        Obj = {},
-                        i, m;
+                // Make sure mods is always an array
+                mods = [].concat(mods);
 
-                    if (!O || typeof O !== "object") {
-                        return this;
+                for (i = 0; i < mods.length; i++) {
+                    theMod = mods[i];
+
+                    if ( !! theMod.mergeEnhancments) {
+                        ops.mergeEnhancments = true;
                     }
 
-                    if ( !! messages && Object.prototype.toString.call(messages) === "[object Array]") {
-                        for (i in messages) {
-                            if (messages.hasOwnProperty(i)) {
-                                m = messages[i].toString();
-                                Obj[m] = m;
+
+                    self.mods[++Module.uid] = Module.create(self, theMod, Module.uid, ops);
+                }
+
+                return self;
+            },
+
+            start: function () {
+                var self = this,
+                    options = self.options,
+                    beforeAfter, name, mod;
+
+                beforeAfter = function (mode) {
+                    var prop, O, i;
+                    if (!!options) {
+                        prop = (mode === "after") ? options.afterInit : options.beforeInit;
+
+                        if (!prop) {
+                            return;
+                        }
+
+                        O = [].concat(prop);
+                        for (i in O) {
+                            if (O.hasOwnProperty(i) && typeof O[i] === "function") {
+                                O[i].call(self);
                             }
                         }
-                        O.messages = Obj;
                     }
+                };
 
-                    Internal.extend(this.enhancements, O);
-                    return this;
-                },
+                beforeAfter("before");
 
-                collect: function (mods) {
-                    var self = this,
-                        Module = self._Module,
-                        ops = self.options || {},
-                        theMod, i;
+                if (debugMode) {
+                    name = (!!options && !!options.name) ? options.name + " " : "";
 
-                    if (!mods) {
-                        return self;
+                    Log(name + "Modules:", self.mods);
+                    Log(name + "Messages:", self._PubSub.topics);
+
+                    if (extendConflicts.length > 0) {
+                        Log(name + "Conflicts: ", extendConflicts.join(', '));
                     }
+                }
 
-                    // Make sure mods is always an array
-                    mods = [].concat(mods);
+                for (mod in self.mods) {
+                    if ("init" in self.mods[mod]) {
+                        self.mods[mod].init();
+                    }
+                }
 
-                    for (i = 0; i < mods.length; i++) {
-                        theMod = mods[i];
+                beforeAfter("after");
+
+                return self;
+            },
+
+
+            inject: function (O) {
+                var self = this,
+                    Module = self._Module,
+                    List = Array.prototype.slice.call(arguments, 1),
+                    uid = (Internal.size(self.mods) - 1),
+                    ops = self.options || {},
+                    theMod, i;
+
+                // If `List` is not empty, assume there are more module objects sent as List Arguments
+                if (List.length > 0) {
+                    List.unshift(O);
+                    O = List;
+                } else {
+                    O = [].concat(O);
+                }
+
+                for (i in O) {
+                    if (O.hasOwnProperty(i)) {
+                        uid++;
+
+                        theMod = O[i];
+
+
 
                         if ( !! theMod.mergeEnhancments) {
                             ops.mergeEnhancments = true;
                         }
 
+                        self.mods[uid] = Module.create(self, theMod, ++Module.uid, ops);
 
-                        self.mods[++Module.uid] = Module.create(self, theMod, Module.uid, ops);
-                    }
-
-                    return self;
-                },
-
-                start: function () {
-                    var self = this,
-                        name, mod;
-
-                    BeforeInit(self, function () {
-                        if (debugMode) {
-                            name = ( !! self.options && !! self.options.name) ? self.options.name + " " : "";
-
-                            Log(name + "Modules:", self.mods);
-                            Log(name + "Messages:", self._PubSub.topics);
-
-                            if (extendConflicts.length > 0) {
-                                Log(name + "Conflicts: ", extendConflicts.join(', '));
-                            }
-                        }
-
-                        for (mod in self.mods) {
-                            if ("init" in self.mods[mod]) {
-                                self.mods[mod].init();
-                            }
-                        }
-                    });
-
-                    AfterInit(self);
-                    return self;
-                },
-
-
-                inject: function (O) {
-                    var self = this,
-                        Module = self._Module,
-                        List = Array.prototype.slice.call(arguments, 1),
-                        uid = (Internal.size(self.mods) - 1),
-                        ops = self.options || {},
-                        theMod, i;
-
-                    // If `List` is not empty, assume there are more module objects sent as List Arguments
-                    if (List.length > 0) {
-                        List.unshift(O);
-                        O = List;
-                    } else {
-                        O = [].concat(O);
-                    }
-
-                    for (i in O) {
-                        if (O.hasOwnProperty(i)) {
-                            uid++;
-
-                            theMod = O[i];
-
-
-
-                            if ( !! theMod.mergeEnhancments) {
-                                ops.mergeEnhancments = true;
-                            }
-
-                            self.mods[uid] = Module.create(self, theMod, ++Module.uid, ops);
-
-                            if ("init" in self.mods[uid]) {
-                                self.mods[uid].init();
-                            }
+                        if ("init" in self.mods[uid]) {
+                            self.mods[uid].init();
                         }
                     }
-                    return self;
                 }
+                return self;
+            }
 
-            };
+        };
 
         return function (options) { // constructor
             var Cluster = Internal.create(proto);
