@@ -1,7 +1,7 @@
 // Set the window as object
 global.window = {};
 
-var chai = require('chai')
+var chai = require('chai'),
 	assert = chai.assert,
 	expect = chai.expect,
 	Cluster = require(__dirname + '/../Cluster.js');
