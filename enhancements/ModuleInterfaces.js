@@ -1,14 +1,16 @@
 /*
   For testing modules, this enhancment exposes the interfaces of each module to
-  the window. 
+  the window.
+
+  This is NOT an enhacement!
 */
 
 var myApp,
     options = {
-        mergeEnhancments: true // this must be true
+        mergeEnhancments: true
     };
 
-// add the function to `afterInit`
+// Add the function to `afterInit`
 options.afterInit = function () {
     var self = this,
         mods = self.mods,
@@ -27,10 +29,10 @@ options.afterInit = function () {
             }
         }
     }
-    window.clusterInterfaces = Interfaces;
+    window.clusterInterfaces = window.$C = Interfaces;
 };
 
-// Start the Cluster
+// Start the Cluster instance
 myApp = Cluster(options);
 
 // Collect Some modules...

@@ -5,7 +5,7 @@
  */
 
 (function (window) {
-    var Log = ( !! window.console) ? console.log : function () {},
+    var Log = (!!window.console) ? console.log : function () {},
         extendConflicts = [],
         // Global so we can see it in debug mode
         debugMode = false,
@@ -24,7 +24,7 @@
             var prop;
             for (prop in source) {
                 if (source.hasOwnProperty(prop)) {
-                    if ( !! noConflict && prop in destination) {
+                    if (!!noConflict && prop in destination) {
                         extendConflicts.push(prop + " is already defined");
                         return;
                     }
@@ -173,7 +173,7 @@
             Internal.extend(Module, Module._pubsub());
             Module = Internal.extend(Module, module);
 
-            if (options && options.mergeEnhancments) {
+            if (options && options.merge) {
                 Internal.extend(Module, Cluster.enhancements, true);
             } else {
                 Module.cluster = Cluster.enhancements;
@@ -196,7 +196,7 @@
                     return this;
                 }
 
-                if ( !! messages && Object.prototype.toString.call(messages) === "[object Array]") {
+                if (!!messages && Object.prototype.toString.call(messages) === "[object Array]") {
                     for (i in messages) {
                         if (messages.hasOwnProperty(i)) {
                             m = messages[i].toString();
@@ -226,8 +226,8 @@
                 for (i = 0; i < mods.length; i++) {
                     theMod = mods[i];
 
-                    if ( !! theMod.mergeEnhancments) {
-                        ops.mergeEnhancments = true;
+                    if (!!theMod.merge) {
+                        ops.merge = true;
                     }
 
 
@@ -307,10 +307,8 @@
 
                         theMod = O[i];
 
-
-
-                        if ( !! theMod.mergeEnhancments) {
-                            ops.mergeEnhancments = true;
+                        if (!!theMod.merge) {
+                            ops.merge = true;
                         }
 
                         self.mods[uid] = Module.create(self, theMod, ++Module.uid, ops);
@@ -328,9 +326,13 @@
         return function (options) { // constructor
             var Cluster = Internal.create(proto);
 
-            if (options && !! options.debug) {
-                debugMode = true;
-                delete options.debug;
+            if (options) {
+                if (!!options.debug){
+                    debugMode = true;
+                    delete options.debug;
+                }
+                
+                options.merge = (!!options.merge || !!options.mergeEnhancements) ? true : false;
             }
 
             Cluster.options = options;
