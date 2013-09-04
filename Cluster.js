@@ -4,12 +4,12 @@
  * Licensed under Creative Commons BY-SA 2.0 (http://creativecommons.org/licenses/by-sa/2.0/)
  */
 
-(function (window, document, undefined) {
-    var Log = ( !! window.console) ? console.log : function () {},
-        Internal,
-        Module,
-        Cluster,
-        PubSub;
+(function (window) {
+    var Log = (!!window.console) ? console.log : function () {},
+        extendConflicts = [],
+        // Global so we can see it in debug mode
+        debugMode = false,
+        Internal, Module, Cluster, PubSub;
 
     Internal = {
         create: (function () {
@@ -21,8 +21,13 @@
         }()),
 
         extend: function (destination, source, noConflict) {
-            for (var prop in source) {
-                if (source.hasOwnProperty(prop) && !( !! noConflict && prop in destination)) {
+            var prop;
+            for (prop in source) {
+                if (source.hasOwnProperty(prop)) {
+                    if (!!noConflict && prop in destination) {
+                        extendConflicts.push(prop + " is already defined");
+                        return;
+                    }
                     destination[prop] = source[prop];
                 }
             }
@@ -165,15 +170,16 @@
             Module._context = Cluster;
             Module.uid = uid;
 
-            if (options && options.mergeEnhancments) {
-                Internal.extend(module, Cluster.enhancements, true);
+            Internal.extend(Module, Module._pubsub());
+            Module = Internal.extend(Module, module);
+
+            if (options && options.merge) {
+                Internal.extend(Module, Cluster.enhancements, true);
             } else {
                 Module.cluster = Cluster.enhancements;
             }
 
-            Internal.extend(Module, Module._pubsub());
-
-            return Internal.extend(Module, module);
+            return Module;
         };
 
     }());
@@ -184,14 +190,13 @@
             enhance: function (O) {
                 var messages = O.messages,
                     Obj = {},
-                    i,
-                    m;
+                    i, m;
 
                 if (!O || typeof O !== "object") {
                     return this;
                 }
 
-                if ( !! messages && Object.prototype.toString.call(messages) === "[object Array]") {
+                if (!!messages && Object.prototype.toString.call(messages) === "[object Array]") {
                     for (i in messages) {
                         if (messages.hasOwnProperty(i)) {
                             m = messages[i].toString();
@@ -209,8 +214,7 @@
                 var self = this,
                     Module = self._Module,
                     ops = self.options || {},
-                    theMod,
-                    i;
+                    theMod, i;
 
                 if (!mods) {
                     return self;
@@ -222,8 +226,8 @@
                 for (i = 0; i < mods.length; i++) {
                     theMod = mods[i];
 
-                    if ( !! theMod.mergeEnhancments) {
-                        ops.mergeEnhancments = true;
+                    if (!!theMod.merge) {
+                        ops.merge = true;
                     }
 
 
@@ -233,9 +237,41 @@
                 return self;
             },
 
-            start: function (O) {
+            start: function () {
                 var self = this,
-                    mod;
+                    options = self.options,
+                    beforeAfter, name, mod;
+
+                beforeAfter = function (mode) {
+                    var prop, O, i;
+                    if (!!options) {
+                        prop = (mode === "after") ? options.afterInit : options.beforeInit;
+
+                        if (!prop) {
+                            return;
+                        }
+
+                        O = [].concat(prop);
+                        for (i in O) {
+                            if (O.hasOwnProperty(i) && typeof O[i] === "function") {
+                                O[i].call(self);
+                            }
+                        }
+                    }
+                };
+
+                beforeAfter("before");
+
+                if (debugMode) {
+                    name = (!!options && !!options.name) ? options.name + " " : "";
+
+                    Log(name + "Modules:", self.mods);
+                    Log(name + "Messages:", self._PubSub.topics);
+
+                    if (extendConflicts.length > 0) {
+                        Log(name + "Conflicts: ", extendConflicts.join(', '));
+                    }
+                }
 
                 for (mod in self.mods) {
                     if ("init" in self.mods[mod]) {
@@ -247,6 +283,7 @@
                     Log("Modules:", self.mods);
                     Log("Messages:", self._PubSub.topics);
                 }
+                beforeAfter("after");
 
                 return self;
             },
@@ -258,8 +295,7 @@
                     List = Array.prototype.slice.call(arguments, 1),
                     uid = (Internal.size(self.mods) - 1),
                     ops = self.options || {},
-                    theMod,
-                    i;
+                    theMod, i;
 
                 // If `List` is not empty, assume there are more module objects sent as List Arguments
                 if (List.length > 0) {
@@ -275,10 +311,8 @@
 
                         theMod = O[i];
 
-
-
-                        if ( !! theMod.mergeEnhancments) {
-                            ops.mergeEnhancments = true;
+                        if (!!theMod.merge) {
+                            ops.merge = true;
                         }
 
                         self.mods[uid] = Module.create(self, theMod, ++Module.uid, ops);
@@ -295,6 +329,15 @@
 
         return function (options) { // constructor
             var Cluster = Internal.create(proto);
+
+            if (options) {
+                if (!!options.debug){
+                    debugMode = true;
+                    delete options.debug;
+                }
+                
+                options.merge = (!!options.merge || !!options.mergeEnhancements) ? true : false;
+            }
 
             Cluster.options = options;
             Cluster.mods = {};
@@ -318,4 +361,4 @@
 
     window.Cluster = Cluster;
 
-}(window, document));
+}(window));

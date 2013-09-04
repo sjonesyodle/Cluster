@@ -4,7 +4,7 @@
   The Bank provides 3 useful methods to get, set, and load global data in your app.
 */
 
-var cluster = Cluster(),
+var myApp = Cluster(),
 	enhancements;
 
 
@@ -42,6 +42,6 @@ enhancements = {
     }())
 };
 
-cluster.enhance(enhancements);
+myApp.enhance(enhancements);
 
-// collect modules and start `cluster` below...
+// collect modules and start `myApp` below...

@@ -1,0 +1,23 @@
+{
+  "name": "Cluster.js",
+  "version": "0.1.9",
+  "contributors": [
+      {
+        "name": "Matt Jordan",
+        "email": ""
+      },
+      {
+        "name": "Steve Jones",
+        "email": ""
+      } 
+  ],
+  "dependencies": {
+    "node-minify": "*",
+    "chai": "*",
+    "mocha": "*"
+  },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  }
+}

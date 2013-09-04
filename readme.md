@@ -4,7 +4,7 @@ Lightweight modular architecture for building maintainable JavaScript applicatio
 
 ---
 
-Cluster is super-tiny and designed to be easy to use--allowing you to focus on your code, not learning the framework...
+Cluster is super-tiny and designed to be easy to use--allowing you to focus on your code...
 
 ### So what is a Cluster?
 
@@ -62,6 +62,14 @@ cluster2.collect({
 
 ### That's nice! What are the methods, and how do I use them?
 
+Before we get into Modules, let's start with the Cluster definition function.
+
+```javascript
+var myApp = Cluster({options});
+``` 
+
+When defining a Cluster, you can set options for the Cluster to use. Read about these [here](https://github.com/sjonesyodle/Cluster/wiki/Cluster-Options).
+
 ##### The `.collect()` method:
 
 ```javascript
@@ -75,18 +83,10 @@ This method is how we tell a certain cluster to 'register' a module. It accepts 
 ##### The `.start()` method:
 
 ```javascript
-cluster.start(Object);
+cluster.start();
 ```
 
 After running `.collect()`, and all modules are loaded into the Cluster, the start method must be called in order to initialize them.
-
-The Object argument for start currently only accepts one property - `debug`
-
-```javascript
-cluster.start({debug: true});
-```
-
-This will log all of the modules and messages registered in the Cluster.
 
 ---
 
