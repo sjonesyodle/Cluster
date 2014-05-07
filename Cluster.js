@@ -32,7 +32,7 @@ Object.extend = Object.extend ? Object.extend :
                 that  = this,
                 args  = Array.prototype.slice.call( arguments ),
                 topic = args.shift();
-
+                
                 if ( !this.topics[topic] ) return false;
 
                 setTimeout(function () {
@@ -41,6 +41,7 @@ Object.extend = Object.extend ? Object.extend :
                     len         = subscribers ? subscribers.length : 0;
 
                     while ( len-- ) {
+
                         subscribers[len].func.apply( subscribers[len].funcContext, args ); 
                     }
 
@@ -219,5 +220,3 @@ Object.extend = Object.extend ? Object.extend :
 }( window ));
 
 module.exports = window.Cluster;
-
-
