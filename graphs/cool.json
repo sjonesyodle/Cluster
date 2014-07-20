@@ -1,0 +1,25 @@
+{
+    "properties": {
+        "name": "cool",
+        "id": "cool",
+        "project": "Cluster",
+        "environment": {
+            "type": "all",
+            "content": ""
+        }
+    },
+    "inports": {},
+    "outports": {},
+    "groups": [],
+    "processes": {
+        "flow/Accept_vjg9x": {
+            "component": "flow/Accept",
+            "metadata": {
+                "label": "flow/Accept",
+                "x": -3636,
+                "y": -288
+            }
+        }
+    },
+    "connections": []
+}
